@@ -1,12 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import type { PriceData } from "@/lib/prices";
+import { fetchPrices, type PriceData } from "@/lib/prices";
 import PriceCard from "./PriceCard";
-
-interface PriceDashboardProps {
-  initialPrices: PriceData[];
-}
 
 function formatTimestamp(iso: string): string {
   return new Intl.DateTimeFormat("en-US", {
@@ -15,34 +11,49 @@ function formatTimestamp(iso: string): string {
   }).format(new Date(iso));
 }
 
-export default function PriceDashboard({ initialPrices }: PriceDashboardProps) {
-  const [prices, setPrices] = useState(initialPrices);
-  const [lastRefreshed, setLastRefreshed] = useState<Date>(new Date());
+function LoadingSkeleton() {
+  return (
+    <div className="grid gap-6 sm:grid-cols-2">
+      {[0, 1].map((key) => (
+        <div
+          key={key}
+          className="h-64 animate-pulse rounded-2xl bg-zinc-900/80 ring-1 ring-zinc-800"
+        />
+      ))}
+    </div>
+  );
+}
+
+export default function PriceDashboard() {
+  const [prices, setPrices] = useState<PriceData[]>([]);
+  const [lastRefreshed, setLastRefreshed] = useState<Date | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const refresh = useCallback(async () => {
-    setIsRefreshing(true);
+  const refresh = useCallback(async (isInitial = false) => {
+    if (isInitial) {
+      setIsLoading(true);
+    } else {
+      setIsRefreshing(true);
+    }
     setError(null);
 
     try {
-      const response = await fetch("/api/prices");
-      if (!response.ok) {
-        const body = await response.json().catch(() => ({}));
-        throw new Error(body.error ?? "Failed to refresh prices");
-      }
-      const data: PriceData[] = await response.json();
+      const data = await fetchPrices();
       setPrices(data);
       setLastRefreshed(new Date());
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to refresh prices");
     } finally {
+      setIsLoading(false);
       setIsRefreshing(false);
     }
   }, []);
 
   useEffect(() => {
-    const interval = setInterval(refresh, 60_000);
+    refresh(true);
+    const interval = setInterval(() => refresh(false), 60_000);
     return () => clearInterval(interval);
   }, [refresh]);
 
@@ -60,14 +71,20 @@ export default function PriceDashboard({ initialPrices }: PriceDashboardProps) {
         </p>
       </header>
 
-      <div className="grid gap-6 sm:grid-cols-2">
-        {bitcoin && <PriceCard data={bitcoin} accent="bitcoin" />}
-        {gold && <PriceCard data={gold} accent="gold" />}
-      </div>
+      {isLoading ? (
+        <LoadingSkeleton />
+      ) : (
+        <div className="grid gap-6 sm:grid-cols-2">
+          {bitcoin && <PriceCard data={bitcoin} accent="bitcoin" />}
+          {gold && <PriceCard data={gold} accent="gold" />}
+        </div>
+      )}
 
       <footer className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-between">
         <p className="text-sm text-zinc-500">
-          Last refreshed {formatTimestamp(lastRefreshed.toISOString())}
+          {lastRefreshed
+            ? `Last refreshed ${formatTimestamp(lastRefreshed.toISOString())}`
+            : "Loading prices…"}
           {prices[0] && (
             <span className="hidden sm:inline">
               {" "}
@@ -87,8 +104,8 @@ export default function PriceDashboard({ initialPrices }: PriceDashboardProps) {
 
         <button
           type="button"
-          onClick={refresh}
-          disabled={isRefreshing}
+          onClick={() => refresh(false)}
+          disabled={isLoading || isRefreshing}
           className="rounded-lg bg-zinc-800 px-4 py-2 text-sm font-medium text-zinc-200 transition-colors hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {isRefreshing ? "Refreshing…" : "Refresh now"}

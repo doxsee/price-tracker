@@ -23,7 +23,7 @@ interface CoinGeckoMarket {
   last_updated: string;
 }
 
-const COINGECKO_URL =
+export const COINGECKO_URL =
   "https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=bitcoin,tether-gold&price_change_percentage_24h=true";
 
 function mapCoin(coin: CoinGeckoMarket): PriceData {
@@ -44,9 +44,7 @@ function mapCoin(coin: CoinGeckoMarket): PriceData {
 }
 
 export async function fetchPrices(): Promise<PriceData[]> {
-  const response = await fetch(COINGECKO_URL, {
-    next: { revalidate: 60 },
-  });
+  const response = await fetch(COINGECKO_URL);
 
   if (!response.ok) {
     throw new Error(`Failed to fetch prices (${response.status})`);

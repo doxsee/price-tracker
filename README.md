@@ -20,6 +20,12 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000). Prices refresh automatically every 60 seconds.
 
+## Live Site
+
+Published on GitHub Pages: [https://doxsee.github.io/price-tracker/](https://doxsee.github.io/price-tracker/)
+
+Pushes to `main` deploy automatically via GitHub Actions.
+
 ## Scripts
 
 | Command       | Description              |
