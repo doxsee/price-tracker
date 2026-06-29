@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { fetchPrices, type PriceData } from "@/lib/prices";
 import PriceCard from "./PriceCard";
+import RatioChart from "./RatioChart";
 
 function formatTimestamp(iso: string): string {
   return new Intl.DateTimeFormat("en-US", {
@@ -61,7 +62,7 @@ export default function PriceDashboard() {
   const gold = prices.find((p) => p.id === "tether-gold");
 
   return (
-    <div className="w-full max-w-4xl">
+    <div className="w-full max-w-5xl">
       <header className="mb-10 text-center">
         <h1 className="text-3xl font-bold tracking-tight text-zinc-50 sm:text-4xl">
           Live Market Prices
@@ -79,6 +80,8 @@ export default function PriceDashboard() {
           {gold && <PriceCard data={gold} accent="gold" />}
         </div>
       )}
+
+      <RatioChart />
 
       <footer className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-between">
         <p className="text-sm text-zinc-500">

@@ -1,0 +1,114 @@
+export interface RatioPoint {
+  timestamp: number;
+  ratio: number;
+  btc: number;
+  gold: number;
+}
+
+export interface Timeframe {
+  label: string;
+  days: number | "max";
+}
+
+export const TIMEFRAMES: Timeframe[] = [
+  { label: "1D", days: 1 },
+  { label: "7D", days: 7 },
+  { label: "1M", days: 30 },
+  { label: "3M", days: 90 },
+  { label: "6M", days: 180 },
+  { label: "1Y", days: 365 },
+  { label: "5Y", days: 1825 },
+  { label: "10Y", days: "max" },
+];
+
+type PriceTuple = [number, number];
+
+interface MarketChartResponse {
+  prices: PriceTuple[];
+}
+
+async function fetchMarketChart(
+  coinId: string,
+  days: number | "max",
+): Promise<PriceTuple[]> {
+  const daysParam = days === "max" ? "max" : String(days);
+  const response = await fetch(
+    `https://api.coingecko.com/api/v3/coins/${coinId}/market_chart?vs_currency=usd&days=${daysParam}`,
+  );
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch ${coinId} history (${response.status})`);
+  }
+
+  const data: MarketChartResponse = await response.json();
+  return data.prices;
+}
+
+function nearestGoldPrice(goldPrices: PriceTuple[], timestamp: number): number {
+  let left = 0;
+  let right = goldPrices.length - 1;
+
+  while (left < right) {
+    const mid = Math.floor((left + right) / 2);
+    if (goldPrices[mid][0] < timestamp) {
+      left = mid + 1;
+    } else {
+      right = mid;
+    }
+  }
+
+  const candidates = [left, left - 1, left + 1].filter(
+    (index) => index >= 0 && index < goldPrices.length,
+  );
+
+  let bestPrice = goldPrices[0][1];
+  let bestDiff = Number.POSITIVE_INFINITY;
+
+  for (const index of candidates) {
+    const diff = Math.abs(goldPrices[index][0] - timestamp);
+    if (diff < bestDiff) {
+      bestDiff = diff;
+      bestPrice = goldPrices[index][1];
+    }
+  }
+
+  return bestPrice;
+}
+
+export function computeRatio(
+  btcPrices: PriceTuple[],
+  goldPrices: PriceTuple[],
+): RatioPoint[] {
+  if (btcPrices.length === 0 || goldPrices.length === 0) {
+    return [];
+  }
+
+  const sortedGold = [...goldPrices].sort((a, b) => a[0] - b[0]);
+
+  return btcPrices
+    .map(([timestamp, btc]) => {
+      const gold = nearestGoldPrice(sortedGold, timestamp);
+      if (gold <= 0) {
+        return null;
+      }
+
+      return {
+        timestamp,
+        ratio: btc / gold,
+        btc,
+        gold,
+      };
+    })
+    .filter((point): point is RatioPoint => point !== null);
+}
+
+export async function fetchRatioHistory(
+  days: number | "max",
+): Promise<RatioPoint[]> {
+  const [btcPrices, goldPrices] = await Promise.all([
+    fetchMarketChart("bitcoin", days),
+    fetchMarketChart("tether-gold", days),
+  ]);
+
+  return computeRatio(btcPrices, goldPrices);
+}
