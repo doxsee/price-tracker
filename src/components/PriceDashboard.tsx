@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { fetchPrices, type PriceData } from "@/lib/prices";
+import CoinGeckoAttribution from "./CoinGeckoAttribution";
 import PriceCard from "./PriceCard";
 import RatioChart from "./RatioChart";
 
@@ -83,6 +84,8 @@ export default function PriceDashboard() {
 
       <RatioChart ready={!isLoading && prices.length > 0} />
 
+      <CoinGeckoAttribution />
+
       <footer className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-between">
         <p className="text-sm text-zinc-500">
           {lastRefreshed
@@ -121,27 +124,7 @@ export default function PriceDashboard() {
         </p>
       )}
 
-      <p className="mt-6 text-center text-xs text-zinc-600">
-        Data provided by{" "}
-        <a
-          href="https://www.coingecko.com"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-zinc-500 underline-offset-2 hover:underline"
-        >
-          CoinGecko
-        </a>
-        . Gold price tracks spot gold via Tether Gold (XAUT). Powered by{" "}
-        <a
-          href="https://www.coingecko.com/en/api"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-zinc-500 underline-offset-2 hover:underline"
-        >
-          CoinGecko API
-        </a>
-        .
-      </p>
+
     </div>
   );
 }
