@@ -112,6 +112,33 @@ async function performFetch(url: string): Promise<Response> {
   throw new Error("CoinGecko rate limit reached. Please wait a minute and retry.");
 }
 
+interface CoinGeckoErrorBody {
+  error?: {
+    status?: {
+      error_code?: number;
+      error_message?: string;
+    };
+  };
+}
+
+async function parseCoinGeckoError(response: Response): Promise<string> {
+  try {
+    const body = (await response.json()) as CoinGeckoErrorBody;
+    const message = body.error?.status?.error_message;
+    if (message) {
+      return message;
+    }
+  } catch {
+    // Fall through to status-based message.
+  }
+
+  if (response.status === 401) {
+    return "CoinGecko authorization failed. Check your Demo API key.";
+  }
+
+  return `CoinGecko request failed (${response.status})`;
+}
+
 export function coingeckoFetch(url: string): Promise<Response> {
   const task = requestChain.then(() => performFetch(url));
   requestChain = task.catch(() => undefined);
@@ -132,7 +159,7 @@ export async function fetchCachedJson<T>(
     const response = await coingeckoFetch(url);
 
     if (!response.ok) {
-      throw new Error(`CoinGecko request failed (${response.status})`);
+      throw new Error(await parseCoinGeckoError(response));
     }
 
     const data = (await response.json()) as T;
@@ -154,7 +181,7 @@ export async function fetchCachedJson<T>(
   }
 }
 
-export function chartCacheTtl(days: number | "max"): number {
+export function chartCacheTtl(days: number): number {
   if (days === 1) return 5 * 60_000;
   if (days === 7 || days === 30) return 15 * 60_000;
   if (days === 90 || days === 180) return 30 * 60_000;

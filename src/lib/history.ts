@@ -7,9 +7,12 @@ export interface RatioPoint {
   gold: number;
 }
 
+/** CoinGecko Demo plan allows at most 365 days of historical chart data. */
+export const DEMO_MAX_HISTORY_DAYS = 365;
+
 export interface Timeframe {
   label: string;
-  days: number | "max";
+  days: number;
 }
 
 export const TIMEFRAMES: Timeframe[] = [
@@ -18,9 +21,7 @@ export const TIMEFRAMES: Timeframe[] = [
   { label: "1M", days: 30 },
   { label: "3M", days: 90 },
   { label: "6M", days: 180 },
-  { label: "1Y", days: 365 },
-  { label: "5Y", days: 1825 },
-  { label: "10Y", days: "max" },
+  { label: "1Y", days: DEMO_MAX_HISTORY_DAYS },
 ];
 
 type PriceTuple = [number, number];
@@ -31,11 +32,10 @@ interface MarketChartResponse {
 
 async function fetchMarketChart(
   coinId: string,
-  days: number | "max",
+  days: number,
 ): Promise<PriceTuple[]> {
-  const daysParam = days === "max" ? "max" : String(days);
-  const cacheKey = `coingecko:chart:${coinId}:${daysParam}`;
-  const url = `https://api.coingecko.com/api/v3/coins/${coinId}/market_chart?vs_currency=usd&days=${daysParam}`;
+  const cacheKey = `coingecko:chart:${coinId}:${days}`;
+  const url = `https://api.coingecko.com/api/v3/coins/${coinId}/market_chart?vs_currency=usd&days=${days}`;
 
   const data = await fetchCachedJson<MarketChartResponse>(
     cacheKey,
@@ -104,9 +104,7 @@ export function computeRatio(
     .filter((point): point is RatioPoint => point !== null);
 }
 
-export async function fetchRatioHistory(
-  days: number | "max",
-): Promise<RatioPoint[]> {
+export async function fetchRatioHistory(days: number): Promise<RatioPoint[]> {
   const btcPrices = await fetchMarketChart("bitcoin", days);
   const goldPrices = await fetchMarketChart("tether-gold", days);
 

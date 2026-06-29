@@ -32,7 +32,7 @@ function formatUsd(value: number): string {
   });
 }
 
-function formatAxisDate(timestamp: number, days: number | "max"): string {
+function formatAxisDate(timestamp: number, days: number): string {
   const date = new Date(timestamp);
 
   if (days === 1) {
@@ -69,7 +69,7 @@ interface RatioChartProps {
 interface ChartTooltipProps {
   active?: boolean;
   payload?: ReadonlyArray<{ payload?: RatioPoint }>;
-  days: number | "max";
+  days: number;
 }
 
 function RatioTooltip({ active, payload, days }: ChartTooltipProps) {
@@ -149,7 +149,8 @@ export default function RatioChart({ ready = true }: RatioChartProps) {
             Bitcoin / Gold Ratio
           </h2>
           <p className="mt-1 text-sm text-zinc-400">
-            Troy ounces of gold one bitcoin buys (BTC ÷ gold spot)
+            Troy ounces of gold one bitcoin buys (BTC ÷ gold spot). Historical
+            range limited to 1 year on the CoinGecko Demo plan.
           </p>
           {latestRatio !== null && (
             <p className="mt-3 font-mono text-3xl font-semibold text-violet-300">
