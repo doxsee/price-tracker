@@ -1,4 +1,4 @@
-import Image from "next/image";
+import { assetPath } from "@/lib/paths";
 
 const ATTRIBUTION_URL =
   "https://www.coingecko.com/en/api?utm_source=price-tracker&utm_medium=referral";
@@ -15,8 +15,9 @@ export default function CoinGeckoAttribution() {
           className="inline-flex transition-opacity hover:opacity-80"
           aria-label="CoinGecko API"
         >
-          <Image
-            src="/coingecko-lockup.svg"
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={assetPath("/coingecko-lockup.svg")}
             alt="CoinGecko"
             width={140}
             height={31}
