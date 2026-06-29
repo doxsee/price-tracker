@@ -1,3 +1,5 @@
+import { fetchCachedJson } from "@/lib/coingecko";
+
 export interface PriceData {
   id: string;
   name: string;
@@ -44,12 +46,11 @@ function mapCoin(coin: CoinGeckoMarket): PriceData {
 }
 
 export async function fetchPrices(): Promise<PriceData[]> {
-  const response = await fetch(COINGECKO_URL);
+  const data = await fetchCachedJson<CoinGeckoMarket[]>(
+    "coingecko:spot-prices",
+    COINGECKO_URL,
+    60_000,
+  );
 
-  if (!response.ok) {
-    throw new Error(`Failed to fetch prices (${response.status})`);
-  }
-
-  const data: CoinGeckoMarket[] = await response.json();
   return data.map(mapCoin);
 }

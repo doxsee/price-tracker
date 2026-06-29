@@ -1,3 +1,5 @@
+import { chartCacheTtl, fetchCachedJson } from "@/lib/coingecko";
+
 export interface RatioPoint {
   timestamp: number;
   ratio: number;
@@ -32,15 +34,15 @@ async function fetchMarketChart(
   days: number | "max",
 ): Promise<PriceTuple[]> {
   const daysParam = days === "max" ? "max" : String(days);
-  const response = await fetch(
-    `https://api.coingecko.com/api/v3/coins/${coinId}/market_chart?vs_currency=usd&days=${daysParam}`,
+  const cacheKey = `coingecko:chart:${coinId}:${daysParam}`;
+  const url = `https://api.coingecko.com/api/v3/coins/${coinId}/market_chart?vs_currency=usd&days=${daysParam}`;
+
+  const data = await fetchCachedJson<MarketChartResponse>(
+    cacheKey,
+    url,
+    chartCacheTtl(days),
   );
 
-  if (!response.ok) {
-    throw new Error(`Failed to fetch ${coinId} history (${response.status})`);
-  }
-
-  const data: MarketChartResponse = await response.json();
   return data.prices;
 }
 
@@ -105,10 +107,8 @@ export function computeRatio(
 export async function fetchRatioHistory(
   days: number | "max",
 ): Promise<RatioPoint[]> {
-  const [btcPrices, goldPrices] = await Promise.all([
-    fetchMarketChart("bitcoin", days),
-    fetchMarketChart("tether-gold", days),
-  ]);
+  const btcPrices = await fetchMarketChart("bitcoin", days);
+  const goldPrices = await fetchMarketChart("tether-gold", days);
 
   return computeRatio(btcPrices, goldPrices);
 }

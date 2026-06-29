@@ -81,7 +81,7 @@ export default function PriceDashboard() {
         </div>
       )}
 
-      <RatioChart />
+      <RatioChart ready={!isLoading && prices.length > 0} />
 
       <footer className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-between">
         <p className="text-sm text-zinc-500">

@@ -62,6 +62,10 @@ function formatAxisDate(timestamp: number, days: number | "max"): string {
   });
 }
 
+interface RatioChartProps {
+  ready?: boolean;
+}
+
 interface ChartTooltipProps {
   active?: boolean;
   payload?: ReadonlyArray<{ payload?: RatioPoint }>;
@@ -92,10 +96,10 @@ function RatioTooltip({ active, payload, days }: ChartTooltipProps) {
   );
 }
 
-export default function RatioChart() {
+export default function RatioChart({ ready = true }: RatioChartProps) {
   const [timeframe, setTimeframe] = useState<Timeframe>(TIMEFRAMES[2]);
   const [data, setData] = useState<RatioPoint[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const loadHistory = useCallback(async (selected: Timeframe) => {
@@ -116,8 +120,12 @@ export default function RatioChart() {
   }, []);
 
   useEffect(() => {
+    if (!ready) {
+      return;
+    }
+
     loadHistory(timeframe);
-  }, [loadHistory, timeframe]);
+  }, [loadHistory, ready, timeframe]);
 
   const latestRatio = data.length > 0 ? data[data.length - 1].ratio : null;
   const firstRatio = data.length > 0 ? data[0].ratio : null;
@@ -187,13 +195,20 @@ export default function RatioChart() {
       </div>
 
       <div className="relative mt-6 h-72 w-full sm:h-80">
-        {isLoading ? (
+        {!ready || isLoading ? (
           <div className="flex h-full items-center justify-center">
             <div className="h-full w-full animate-pulse rounded-xl bg-zinc-800/60" />
           </div>
         ) : error ? (
-          <div className="flex h-full items-center justify-center text-sm text-rose-400">
-            {error}
+          <div className="flex h-full flex-col items-center justify-center gap-3 text-center">
+            <p className="max-w-md text-sm text-rose-400">{error}</p>
+            <button
+              type="button"
+              onClick={() => loadHistory(timeframe)}
+              className="rounded-lg bg-zinc-800 px-4 py-2 text-sm font-medium text-zinc-200 transition-colors hover:bg-zinc-700"
+            >
+              Retry
+            </button>
           </div>
         ) : data.length === 0 ? (
           <div className="flex h-full items-center justify-center text-sm text-zinc-500">
