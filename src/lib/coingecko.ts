@@ -1,11 +1,23 @@
 const MIN_REQUEST_INTERVAL_MS = 1_500;
 const MAX_RETRIES = 3;
 
+const DEMO_API_KEY = process.env.NEXT_PUBLIC_COINGECKO_API_KEY;
+
 let lastRequestAt = 0;
 let requestChain: Promise<unknown> = Promise.resolve();
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function getAuthHeaders(): HeadersInit {
+  if (!DEMO_API_KEY) {
+    return {};
+  }
+
+  return {
+    "x-cg-demo-api-key": DEMO_API_KEY,
+  };
 }
 
 function readCache<T>(key: string): T | null {
@@ -76,7 +88,9 @@ async function performFetch(url: string): Promise<Response> {
     lastRequestAt = Date.now();
 
     try {
-      const response = await fetch(url);
+      const response = await fetch(url, {
+        headers: getAuthHeaders(),
+      });
 
       if (response.status === 429) {
         const retryAfter = Number(response.headers.get("retry-after") ?? "60");
@@ -132,7 +146,7 @@ export async function fetchCachedJson<T>(
 
     if (error instanceof TypeError) {
       throw new Error(
-        "Unable to reach CoinGecko. Their free API may be rate-limiting this page — wait a minute and try again.",
+        "Unable to reach CoinGecko. Wait a minute and try again.",
       );
     }
 

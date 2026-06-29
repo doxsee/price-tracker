@@ -13,6 +13,12 @@ Gold spot price is sourced via [Tether Gold (XAUT)](https://www.coingecko.com/en
 
 ## Getting Started
 
+Copy the example env file and add your [CoinGecko Demo API key](https://www.coingecko.com/en/developers/dashboard):
+
+```bash
+cp .env.example .env.local
+```
+
 ```bash
 npm install
 npm run dev
@@ -25,6 +31,8 @@ Open [http://localhost:3000](http://localhost:3000). Prices refresh automaticall
 Published on GitHub Pages: [https://doxsee.github.io/price-tracker/](https://doxsee.github.io/price-tracker/)
 
 Pushes to `main` deploy automatically via GitHub Actions.
+
+For GitHub Pages builds, add your API key as a repository secret named `COINGECKO_API_KEY`.
 
 ## Scripts
 

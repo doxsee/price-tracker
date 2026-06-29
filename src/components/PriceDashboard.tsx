@@ -131,7 +131,16 @@ export default function PriceDashboard() {
         >
           CoinGecko
         </a>
-        . Gold price tracks spot gold via Tether Gold (XAUT).
+        . Gold price tracks spot gold via Tether Gold (XAUT). Powered by{" "}
+        <a
+          href="https://www.coingecko.com/en/api"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-zinc-500 underline-offset-2 hover:underline"
+        >
+          CoinGecko API
+        </a>
+        .
       </p>
     </div>
   );
